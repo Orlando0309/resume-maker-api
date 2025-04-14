@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Resume</title>
+  <style>
+    /* GLOBAL STYLES */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* HEADER / CONTACT INFO */
+    .resume-header {
+      text-align: start;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+    .resume-header h1 {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .contact-info {
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* SECTION HEADERS */
+    .section {
+      margin-top: 20px;
+    }
+    .section h2 {
+      font-size: 16px;
+      text-transform: uppercase;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      color: #333;
+    }
+
+    /* EXPERIENCE ENTRIES */
+    .experience-entry {
+      margin-bottom: 15px;
+    }
+    .experience-entry h3 {
+      font-size: 14px;
+      margin: 0;
+      font-weight: bold;
+    }
+    .experience-meta {
+      font-size: 13px;
+      color: #666;
+    }
+    .experience-description {
+      margin-top: 5px;
+      white-space: pre-line;
+    }
+
+    /* EDUCATION ENTRIES */
+    .education-entry {
+      margin-bottom: 15px;
+    }
+    .education-entry h3 {
+      font-size: 14px;
+      margin: 0;
+      font-weight: bold;
+    }
+    .education-meta {
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* SKILLS, CERTIFICATIONS, PROJECTS, ETC. */
+    .inline-list {
+      list-style-type: disc;
+      padding-left: 20px;
+      margin: 0;
+      margin-top: 5px;
+    }
+    .inline-list li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER SECTION -->
+  <div class="resume-header">
+    <h1>{{ resume.personal_info.full_name if resume.personal_info.get('full_name') else 'Name Not Provided' }}</h1>
+    <div class="contact-info">
+      {% if resume.personal_info.get('email') %}
+        Email: {{ resume.personal_info.email }}
+      {% endif %}
+    </div>
+    {% if resume.personal_info.get('phone') %}
+    <div class="contact-info">
+      Téléphone: {{ resume.personal_info.phone }}
+    </div>    
+      {% endif %}
+    {% if resume.personal_info.get('address') %}
+      <div class="contact-info">
+        Contact: {{ resume.personal_info.address }}
+      </div>
+    {% endif %}
+    {% if resume.personal_info.linkedin %}
+        <div class="contact-info">LinkedIn: {{ resume.personal_info.linkedin }}</div>
+    {% endif %}
+    {% if resume.personal_info.facebook %}
+        <div class="contact-info">Facebook: {{ resume.personal_info.facebook }}</div>
+    {% endif %}
+    {% if resume.personal_info.x %}
+        <div class="contact-info">X: {{ resume.personal_info.x }}</div>
+    {% endif %}
+  </div>
+
+  <!-- SUMMARY / OBJECTIVE (OPTIONAL) -->
+  {% if resume.personal_info.get('summary') %}
+  <div class="section">
+    <h2>Professional Summary</h2>
+    <p>{{ resume.personal_info.summary }}</p>
+  </div>
+  {% endif %}
+
+  <!-- SKILLS (OPTIONAL) -->
+  {% if resume.skills and resume.skills|length > 0 %}
+  <div class="section">
+    <h2>Skills</h2>
+    <ul class="inline-list">
+      {% for skill in resume.skills %}
+        <li>{{ skill.skill_name }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- EXPERIENCE -->
+  {% if resume.experiences and resume.experiences|length > 0 %}
+  <div class="section">
+    <h2>Experience</h2>
+    {% for exp in resume.experiences %}
+      <div class="experience-entry">
+        <h3>{{ exp.title }} at {{ exp.company }}</h3>
+        <div class="experience-meta">
+          {% if exp.start_date %}{{ exp.start_date|strftime("%b %Y") }}{% endif %} - 
+          {{ exp.end_date|strftime("%b %Y") if exp.end_date else "Present" }}
+        </div>
+        <div class="experience-description">
+          {{ exp.description }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- EDUCATION -->
+  {% if resume.educations and resume.educations|length > 0 %}
+  <div class="section">
+    <h2>Education</h2>
+    {% for edu in resume.educations %}
+      <div class="education-entry">
+        <h3>{{ edu.degree }}</h3>
+        <div class="education-meta">
+          {{ edu.school }} | 
+          {% if edu.start_date %}{{ edu.start_date|strftime("%Y") }}{% endif %} - 
+          {{ edu.end_date|strftime("%Y") if edu.end_date else "Present" }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- CERTIFICATIONS (OPTIONAL) -->
+  {% if resume.certifications and resume.certifications|length > 0 %}
+  <div class="section">
+    <h2>Certifications</h2>
+    <ul class="inline-list">
+      {% for cert in resume.certifications %}
+        <li>
+          <strong>{{ cert.title }}</strong> - {{ cert.authority }} 
+          {% if cert.date %} ({{ cert.date|strftime("%b %Y") }}){% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- PROJECTS (OPTIONAL) -->
+  {% if resume.projects and resume.projects|length > 0 %}
+  <div class="section">
+    <h2>Projects</h2>
+    {% for proj in resume.projects %}
+      <p>
+        <strong>{{ proj.title }}</strong><br>
+        <span class="project-info">{{ proj.description }}</span><br>
+        {% if proj.used_skills %}
+            <p>Used Skills: {{ proj.used_skills | join(', ') }}</p>
+        {% endif %}
+        {% if proj.link %} 
+          <a href="{{ proj.link }}" target="_blank">{{ proj.link }}</a>
+        {% endif %}
+      </p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</body>
+</html>
