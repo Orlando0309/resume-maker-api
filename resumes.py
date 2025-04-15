@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post("/resume", response_model=ResumeResponse)
 def create_resume(resume: ResumeCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    db_resume = Resume(user_id=user.id, personal_info=resume.personal_info.dict())
+    db_resume = Resume(user_id=user.id,title = resume.title, personal_info=resume.personal_info.dict())
     db.add(db_resume)
     db.commit()
     db.refresh(db_resume)

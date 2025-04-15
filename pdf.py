@@ -24,7 +24,7 @@ def format_date(value, format_string="%b %Y"):
 
 env.filters["strftime"] = format_date
 
-@router.post("/generate-resume")
+@router.post("/generate-resume-pdf")
 def generate_resume(request: GeneratePDFRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     # Validate resume_id
     try:
