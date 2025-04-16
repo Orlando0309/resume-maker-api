@@ -7,6 +7,8 @@ import os
 from fastapi import  HTTPException
 from dotenv import load_dotenv
 
+from LLM.load_prompt import load_prompt
+from LLM.utils import get_prompt
 from schemas import ResumeCreate
 load_dotenv() 
 
@@ -20,6 +22,7 @@ class ResumeState(TypedDict):
     profile_data: dict
     job_description: str
     generated_resume: dict
+    hr_key_points: dict
     score: int
     attempts: int
 
@@ -38,11 +41,27 @@ def query_to_llm(prompt: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemini API call failed: {str(e)}")
 
+def hr_specialist_agent(state: ResumeState) -> ResumeState:
+    job_desc = state["job_description"]
+
+    hr_prompt = load_prompt(prompt_file= get_prompt("agents.yaml"),
+                            prompt_key='hr_prompt',
+                            job_desc=job_desc)
+
+    hr_response = query_to_llm(hr_prompt)
+    hr_response = hr_response.replace("```json", "").replace("```", "")
+
+    try:
+        key_points = json.loads(hr_response)
+    except json.JSONDecodeError as e:
+        raise Exception(f"Invalid JSON from HR agent: {str(e)}\nResponse was: {hr_response}")
+
+    return {**state, "hr_key_points": key_points}
 
 
 # Generator node
 def generator_agent(state: ResumeState) -> ResumeState:
-    prompt = build_resume_prompt(state["profile_data"], state["job_description"])
+    prompt = build_resume_prompt(state["profile_data"], state["hr_key_points"])
     resume_json = query_to_llm(prompt)
     try:
         resume_json = resume_json.replace("```json", "").replace("```", "")
@@ -51,26 +70,17 @@ def generator_agent(state: ResumeState) -> ResumeState:
         raise Exception("Invalid resume JSON")
     return {**state, "generated_resume": resume_data}
 
+
 # Evaluator node
 def evaluator_agent(state: ResumeState) -> ResumeState:
     resume = state["generated_resume"]
     job_desc = state["job_description"]
 
-    eval_prompt = (
-    "You are an ATS evaluation assistant. Your task is to assess the following resume for its compatibility with Applicant Tracking Systems (ATS) and how well it aligns with the job description.\n\n"
-    f"Resume:\n{json.dumps(resume, indent=2)}\n\n"
-    f"Job Description:\n{job_desc}\n\n"
-    "Evaluate based on these ATS criteria:\n"
-    "- **Keywords:** Does the resume include relevant keywords and skills from the job description?\n"
-    "- **Contact Information:** Are the contact details clear and easily parsable?\n"
-    "- **Conciseness:** Are there overly long or dense text blocks?\n"
-    "- **Grammar and Spelling:** Are there any errors that might confuse the system?\n\n"
-    "Give a score from 0 to 100 based on ATS compatibility and alignment with the job description (relevance, tailoring, and keyword alignment).\n\n"
-    "**Important: Only respond with a valid JSON object in the exact format below — no extra explanation, no comments, no markdown.**\n\n"
-    "Example:\n"
-    "{ \"score\": 85 }\n\n"
-    "Now, return the score JSON for this evaluation:"
-)
+    eval_prompt = load_prompt(prompt_file= get_prompt("agents.yaml"),
+                            prompt_key='eval_prompt',
+                            job_desc=job_desc,
+                            resume = json.dumps(resume, indent=2)
+                            )
 
 
     eval_response = query_to_llm(eval_prompt)
@@ -81,7 +91,7 @@ def evaluator_agent(state: ResumeState) -> ResumeState:
 
 # Router
 def router(state: ResumeState) -> str:
-    if state["score"] >= 80 or state["attempts"] >= 3:
+    if state["score"] >= 70 or state["attempts"] >= 3:
         return "return_result"
     else:
         state["attempts"] += 1
@@ -90,14 +100,20 @@ def router(state: ResumeState) -> str:
 
 # Define the LangGraph
 graph = StateGraph(ResumeState)
+
+graph.add_node("extract_key_points", hr_specialist_agent)
 graph.add_node("generate_resume", generator_agent)
 graph.add_node("evaluate_resume", evaluator_agent)
-graph.add_node("rewrite_resume", generator_agent)  # Add the missing node
-graph.add_node("return_result", lambda state: state)  # Terminal node doesn't need processing
+graph.add_node("rewrite_resume", generator_agent)
+graph.add_node("return_result", lambda state: state)
+
+graph.add_edge("extract_key_points", "generate_resume")
+graph.add_edge("generate_resume", "evaluate_resume")
+graph.add_edge("rewrite_resume", "evaluate_resume")
 
 graph.add_conditional_edges("evaluate_resume", router)
-graph.add_edge("generate_resume", "evaluate_resume")
-graph.add_edge("rewrite_resume", "evaluate_resume")  # Correct edge destination
-graph.set_entry_point("generate_resume")
+
+graph.set_entry_point("extract_key_points")
 
 resume_graph = graph.compile()
+

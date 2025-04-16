@@ -11,6 +11,7 @@ import requests
 import os
 from dotenv import load_dotenv
 load_dotenv() 
+from LLM.agents import resume_graph
 
 import google.generativeai as genai
 router = APIRouter()
@@ -183,7 +184,8 @@ def generate_resume(request: GenerateResumeRequest, db: Session = Depends(get_db
                 "school": edu.school,
                 "degree": edu.degree,
                 "start_date": edu.start_date.isoformat(),
-                "end_date": edu.end_date.isoformat() if edu.end_date else None
+                "end_date": edu.end_date.isoformat() if edu.end_date else None,
+                "used_skills": edu.used_skills,
             }
             for edu in profile.educations
         ],
@@ -212,52 +214,22 @@ def generate_resume(request: GenerateResumeRequest, db: Session = Depends(get_db
     job_description = request.job_description
 
     # Construct the prompt for the LLM
-    generation_prompt = (
-        "You are an HR professional tasked with creating a tailored resume for a candidate based on their profile information and a specific job description. "
-        "Your goal is to generate a resume that highlights the candidate's skills, education, experiences, certifications, and projects in a way that aligns with the job requirements. "
-        "You must use only the information provided in the candidate's profile and not introduce any new data or modify the personal information.\n\n"
-        
-        f"Candidate Profile Data:\n{json.dumps(profile_data, indent=2)}\n\n"
-        f"Job Description:\n{job_description}\n\n"
-        
-        "Using the candidate's profile data, create a resume that:\n"
-        "- Tailors the wording, ordering, and emphasis of the skills, education, experiences, certifications, and projects to match the job description.\n"
-        "- Does not add any new skills, experiences, or other data not present in the profile.\n"
-        "- Preserves the candidate’s original personal information (full_name, email, phone, address, linkedin, facebook, x) exactly as provided.\n"
-        "- Follows standard resume norms:\n"
-        "  - Lists work experiences and education in reverse chronological order (newest first).\n"
-        "  - Uses concise, action-oriented language and maintains consistency.\n"
-        "  - Ensures date values are in 'YYYY-MM-DD' format.\n"
-        "  - Maintains clarity and proper formatting for easy readability.\n"
-        "- For optional fields (address, linkedin, facebook, x, end_date, link), if missing in the profile, set them explicitly to null.\n\n"
-        
-        "Generate the resume strictly in JSON format matching the following ResumeCreate schema. Do not include any additional text or explanations.\n\n"
-        
-        f"The required output JSON schema is: {ResumeCreate.model_json_schema()}\n\n"
-        
-        "Ensure that:\n"
-        "- All dates are formatted as 'YYYY-MM-DD'.\n"
-        "- Work experiences and education entries are sorted in reverse chronological order.\n"
-        "- No new data is introduced; only the existing profile data is used.\n"
-        "- Optional fields missing from the profile are set to null.\n"
-        "- The output is valid JSON matching the provided schema.\n\n"
-        
-        "Output only the JSON and nothing else."
-    )
 
+    initial_state = {
+    "profile_data": profile_data,
+    "job_description": job_description,
+    "generated_resume": {},
+    "score": 0,
+    "attempts": 0
+    }
     # Query the LLM for the generated resume
-    generated_resume_str = query_to_llm(generation_prompt)
-
-    # Parse the generated response as JSON
-    try:
-        generated_resume_str = generated_resume_str.replace("```json", "").replace("```", "")
-        generated_resume_json = json.loads(generated_resume_str)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Failed to parse generated resume JSON")
+    
+    result_state = resume_graph.invoke(initial_state)
+    final_resume = result_state["generated_resume"]
 
     # Validate the JSON data against the ResumeCreate schema
     try:
-        generated_resume = ResumeCreate(**generated_resume_json)
+        generated_resume = ResumeCreate(**final_resume)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Invalid generated resume data: {str(e)}")
 
