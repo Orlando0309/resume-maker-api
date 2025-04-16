@@ -52,6 +52,7 @@ class UserEducation(Base):
     degree = Column(String)
     start_date = Column(Date)
     end_date = Column(Date, nullable=True)
+    used_skills = Column(JSON, default=list)
     profile = relationship("UserProfile", back_populates="educations")
 
 class UserSkill(Base):
@@ -114,6 +115,7 @@ class Education(Base):
     degree = Column(String)
     start_date = Column(Date)
     end_date = Column(Date, nullable=True)
+    used_skills = Column(JSON, default=list)
     resume = relationship("Resume", back_populates="educations")
 
 class Skill(Base):

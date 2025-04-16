@@ -39,6 +39,7 @@ def generate_resume(request: GeneratePDFRequest, db: Session = Depends(get_db), 
 
     # Prepare resume data with all sections
     resume_data = {
+        "title": resume.title,
         "personal_info": resume.personal_info or {},  # Handle case where personal_info is None
         "experiences": [
             {
@@ -55,7 +56,8 @@ def generate_resume(request: GeneratePDFRequest, db: Session = Depends(get_db), 
                 "school": edu.school,
                 "degree": edu.degree,
                 "start_date": edu.start_date,
-                "end_date": edu.end_date
+                "end_date": edu.end_date,
+                "used_skills": edu.used_skills,
             }
             for edu in resume.educations
         ],

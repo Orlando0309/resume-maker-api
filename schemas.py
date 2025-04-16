@@ -22,10 +22,12 @@ class PersonalInfo(BaseModel):
     full_name: str
     email: EmailStr
     phone: str
+    summary: Optional[str] = None
     address: Optional[str] = None
     linkedin: Optional[str] = None
     facebook: Optional[str] = None
     x: Optional[str] = None
+    github: Optional[str] = None
 
 # Resume Section Base Schemas (for Resume input)
 class ExperienceBase(BaseModel):
@@ -40,6 +42,7 @@ class EducationBase(BaseModel):
     degree: str
     start_date: date
     end_date: Optional[date] = None
+    used_skills: List[str] = []
 
 class SkillBase(BaseModel):
     skill_name: str
@@ -68,6 +71,7 @@ class UserEducationBase(BaseModel):
     degree: str
     start_date: date
     end_date: Optional[date] = None
+    used_skills: List[str] = []
 
 class UserSkillBase(BaseModel):
     skill_name: str

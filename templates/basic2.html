@@ -30,12 +30,6 @@
       font-weight: bold;
       margin-bottom: 5px;
     }
-    .resume-header h2 {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #666;
-    }
     .contact-info {
       font-size: 14px;
       color: #666;
@@ -116,7 +110,7 @@
       {% endif %}
     {% if resume.personal_info.get('address') %}
       <div class="contact-info">
-        Contact: {{ resume.personal_info.address }}
+        Adresse: {{ resume.personal_info.address }}
       </div>
     {% endif %}
     {% if resume.personal_info.linkedin %}
@@ -128,6 +122,9 @@
     {% if resume.personal_info.x %}
         <div class="contact-info">X: {{ resume.personal_info.x }}</div>
     {% endif %}
+    {% if resume.personal_info.github %}
+        <div class="contact-info">Git: {{ resume.personal_info.github }}</div>
+    {% endif %}
   </div>
 
   {% if resume.personal_info.get('summary') %}
@@ -136,15 +133,7 @@
     <p>{{ resume.personal_info.summary }}</p>
   </div>
   {% endif %}
-
-  <!-- SUMMARY / OBJECTIVE (OPTIONAL) -->
-  {% if resume.personal_info.get('summary') %}
-  <div class="section">
-    <h2>Professional Summary</h2>
-    <p>{{ resume.personal_info.summary }}</p>
-  </div>
-  {% endif %}
-
+  
   <!-- SKILLS (OPTIONAL) -->
   {% if resume.skills and resume.skills|length > 0 %}
   <div class="section">
@@ -188,6 +177,9 @@
           {{ edu.school }} | 
           {% if edu.start_date %}{{ edu.start_date|strftime("%Y") }}{% endif %} - 
           {{ edu.end_date|strftime("%Y") if edu.end_date else "Present" }}
+          {% if edu.used_skills %}
+            <p>Compétences: {{ edu.used_skills | join(', ') }}</p>
+        {% endif %}
         </div>
       </div>
     {% endfor %}
@@ -212,13 +204,13 @@
   <!-- PROJECTS (OPTIONAL) -->
   {% if resume.projects and resume.projects|length > 0 %}
   <div class="section">
-    <h2>Projects</h2>
+    <h2>Projets</h2>
     {% for proj in resume.projects %}
       <p>
         <strong>{{ proj.title }}</strong><br>
         <span class="project-info">{{ proj.description }}</span><br>
         {% if proj.used_skills %}
-            <p>Used Skills: {{ proj.used_skills | join(', ') }}</p>
+            <p>Compétences: {{ proj.used_skills | join(', ') }}</p>
         {% endif %}
         {% if proj.link %} 
           <a href="{{ proj.link }}" target="_blank">{{ proj.link }}</a>

@@ -40,6 +40,7 @@ def update_resume(resume_id: uuid.UUID, resume: ResumeCreate, db: Session = Depe
     db_resume = db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == user.id).first()
     if not db_resume:
         raise HTTPException(status_code=404, detail="Resume not found")
+    db_resume.title = resume.title
     db_resume.personal_info = resume.personal_info.dict()
     for model in [Experience, Education, Skill, Certification, Project]:
         db.query(model).filter(model.resume_id == resume_id).delete()
