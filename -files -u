@@ -1,0 +1,6 @@
+[33m23f653a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge pull request #3 from Orlando0309/fix/issues-#2
+[33m2a87c8e[m[33m ([m[1;31morigin/fix/issues-#2[m[33m, [m[1;32mfix/issues-#2[m[33m)[m Fix #2 by using langgraph
+[33m0e4c7c9[m Merge pull request #1 from Orlando0309/feature/generate-resume-from-info
+[33m474300a[m[33m ([m[1;31morigin/feature/generate-resume-from-info[m[33m, [m[1;32mfeature/generate-resume-from-info[m[33m)[m Modification conception de base en ajoutant les info perso et de pouvoir generer des CV a partir de celui-ci
+[33m064949a[m[33m ([m[1;32mfeature/summary[m[33m)[m Basic elements
+[33m10968e6[m Basic elements

@@ -223,16 +223,67 @@ class ApplicationCreate(BaseModel):
     resume_id: Optional[uuid.UUID] = None
     job_title: str
     company_name: str
-    application_date: date
-    status: str
+    job_description: Optional[str] = None
+    application_date: Optional[date] = None
+    status: str = "applied"
+    source: Optional[str] = None
+    salary_range: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
 
-class ApplicationResponse(BaseModel):
+class ApplicationUpdate(BaseModel):
+    resume_id: Optional[uuid.UUID] = None
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    job_description: Optional[str] = None
+    status: Optional[str] = None
+    source: Optional[str] = None
+    salary_range: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+
+class ApplicationStatusHistoryResponse(BaseModel):
     id: uuid.UUID
-    resume_id: Optional[uuid.UUID]
-    job_title: str
-    company_name: str
-    application_date: date
     status: str
+    notes: Optional[str] = None
+    changed_at: datetime
 
     class Config:
         orm_mode = True
+
+class ApplicationResponse(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    resume_id: Optional[uuid.UUID]
+    job_title: str
+    company_name: str
+    job_description: Optional[str] = None
+    application_date: date
+    status: str
+    source: Optional[str] = None
+    salary_range: Optional[str] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    status_history: List[ApplicationStatusHistoryResponse] = []
+
+    class Config:
+        orm_mode = True
+
+# Application with Resume Integration
+class ApplicationWithResumeResponse(ApplicationResponse):
+    resume: Optional['ResumeResponse'] = None
+
+# Resume Optimization for Application
+class OptimizeResumeForApplicationRequest(BaseModel):
+    application_id: uuid.UUID
+    generate_new_resume: bool = False  # If True, generate from profile; if False, optimize existing
+
+class ApplicationAnalyticsResponse(BaseModel):
+    total_applications: int
+    applications_by_status: Dict[str, int]
+    applications_by_month: Dict[str, int]
+    top_companies: List[Dict[str, Any]]
+    response_rate: float
+    average_days_to_response: Optional[float] = None

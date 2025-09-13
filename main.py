@@ -5,6 +5,7 @@ from resumes import router as resumes_router
 from optimization import router as optimization_router
 from pdf import router as pdf_router
 from dashboard import router as dashboard_router
+from applications import router as applications_router
 from database import Base,engine
 from userInfo import router as userInfo_router
 
@@ -28,4 +29,5 @@ app.include_router(resumes_router)
 app.include_router(optimization_router)
 app.include_router(pdf_router)
 app.include_router(dashboard_router)
+app.include_router(applications_router)
 app.include_router(userInfo_router)

@@ -149,9 +149,26 @@ class Application(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     resume_id = Column(UUID(as_uuid=True), ForeignKey("resumes.id"), nullable=True)
-    job_title = Column(String)
-    company_name = Column(String)
-    application_date = Column(Date)
-    status = Column(String)
+    job_title = Column(String, nullable=False)
+    company_name = Column(String, nullable=False)
+    job_description = Column(String, nullable=True)  # Store job description for optimization
+    application_date = Column(Date, default=datetime.utcnow().date())
+    status = Column(String, default="applied")  # applied, under_review, interview, rejected, accepted
+    source = Column(String, nullable=True)  # linkedin, company_website, referral, etc.
+    salary_range = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    notes = Column(String, nullable=True)  # User notes about the application
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user = relationship("User", back_populates="applications")
     resume = relationship("Resume")
+    status_history = relationship("ApplicationStatusHistory", back_populates="application", cascade="all, delete-orphan")
+
+class ApplicationStatusHistory(Base):
+    __tablename__ = "application_status_history"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id = Column(UUID(as_uuid=True), ForeignKey("applications.id"))
+    status = Column(String, nullable=False)
+    notes = Column(String, nullable=True)
+    changed_at = Column(DateTime, default=datetime.utcnow)
+    application = relationship("Application", back_populates="status_history")

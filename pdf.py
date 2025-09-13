@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
@@ -9,6 +9,7 @@ from jinja2 import Template, Environment, FileSystemLoader
 import pdfkit
 import os
 import uuid
+from pathlib import Path
 from datetime import date
 
 router = APIRouter()
@@ -25,7 +26,7 @@ def format_date(value, format_string="%b %Y"):
 env.filters["strftime"] = format_date
 
 @router.post("/generate-resume-pdf")
-def generate_resume(request: GeneratePDFRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def generate_resume(background_tasks: BackgroundTasks,request: GeneratePDFRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     # Validate resume_id
     try:
         resume_id = uuid.UUID(str(request.resume_id))
@@ -100,5 +101,17 @@ def generate_resume(request: GeneratePDFRequest, db: Session = Depends(get_db), 
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to generate PDF")
 
+    background_tasks.add_task(delete_file, Path(pdf_filename))
     # Return the PDF file as a response
     return FileResponse(pdf_filename, media_type="application/pdf", filename="resume.pdf")
+
+def delete_file(path: Path):
+    try:
+        path.unlink()
+        print(f"{path} has been deleted successfully.")
+    except FileNotFoundError:
+        print(f"{path} does not exist.")
+    except PermissionError:
+        print(f"Permission denied: {path}")
+    except Exception as e:
+        print(f"Error occurred: {e}")
